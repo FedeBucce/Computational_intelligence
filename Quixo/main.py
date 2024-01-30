@@ -1,4 +1,5 @@
 import random
+from matplotlib import pyplot as plt
 import numpy as np
 from game import Game, Move, Player
 
@@ -12,8 +13,6 @@ class RandomPlayer(Player):
         move = random.choice([Move.TOP, Move.BOTTOM, Move.LEFT, Move.RIGHT])
         return from_pos, move
 
-
-cache = {}
 
 class MinMax(Player):
     def __init__(self, game: 'Game') -> None:
@@ -30,20 +29,23 @@ class MinMax(Player):
         return player_score - opponent_score
 
     def calculate_score(self, game, player):
-        score = 0
+        row_max = max(self.get_point_in_line(row, player) for row in game._board)
+        col_max = max(self.get_point_in_line(col, player) for col in game._board.T)
+        diag_max = max(self.get_point_in_line(np.diag(game._board), player),
+                    self.get_point_in_line(np.diag(np.fliplr(game._board)), player))
 
-        for row in game._board:
-            score += self.count_consecutive(row, player)
+        return max(row_max, col_max, diag_max)
 
-        for col in game._board.T:
-            score += self.count_consecutive(col, player)
+    def get_point_in_line(self, line, player):
+        current_count = 0
 
-        score += self.count_consecutive(np.diag(game._board), player)
-        score += self.count_consecutive(np.diag(np.fliplr(game._board)), player)
-
-        return score
-
-    def count_consecutive(self, line, player):
+        for element in line:
+            if element == player:
+                current_count += 1
+            
+        return current_count
+    
+    def count_consecutive(self, line, player):  
         count = 0
         max_count = 0
         for cell in line:
@@ -61,7 +63,6 @@ class MinMax(Player):
 
         player = 1 if maximizingPlayer else 0
         possible_moves = game.possible_moves(player)
-
 
         if maximizingPlayer:
             maxEval = float('-inf')
@@ -96,9 +97,8 @@ class MinMax(Player):
 
         player = self.game.get_current_player()
         possible_moves = game.possible_moves(player)
-
-        if self.game.get_game_state() in cache.keys():
-            return cache[self.game.get_game_state()]
+        
+        random.shuffle(possible_moves)
        
         for move in possible_moves:
             child = self.game.create_new_state(move[0], move[1], player)
@@ -108,15 +108,14 @@ class MinMax(Player):
                 break
 
 
-            eval, _, _ = self.minmax(child, 10, float('-inf'), float('inf'), player)
+            eval, _, _ = self.minmax(child, 4, float('-inf'), float('inf'), player)
 
             if eval > global_eval:
                 global_eval = eval
                 best_movement = move
         
-        cache[self.game.get_game_state()] = best_movement
         return best_movement
-
+    
 
 if __name__ == '__main__':
     count_0 = 0
@@ -124,9 +123,9 @@ if __name__ == '__main__':
 
     for i in range(100):
         game = Game()
-        
-        player2 = RandomPlayer()
-        player1 = MinMax(game)
+
+        player1 = RandomPlayer()
+        player2 = MinMax(game)
         
         winner = game.play(player1, player2)
 
@@ -134,7 +133,7 @@ if __name__ == '__main__':
             count_0 += 1
         else:
             count_1 += 1
-        print(f"{i+1} -> First Player win {count_0} matches")
-        print(f"{i+1} -> Second Player win {count_1} matches")
-        print()
+
+        print(f"{i+1} -> First Player won {count_0} matches")
+        print(f"{i+1} -> Second Player won {count_1} matches\n")
 

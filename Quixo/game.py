@@ -5,6 +5,13 @@ import numpy as np
 
 # Rules on PDF and https://cdn.1j1ju.com/medias/a8/5e/26-quixo-rulebook.pdf
 
+colors = {
+    'reset': "\033[0m",
+    'red': "\033[91m",
+    'green': "\033[92m",
+    'yellow': "\033[93m",
+    'blue': "\033[94m"
+}
 
 class Move(Enum):
     '''
@@ -86,6 +93,19 @@ class Game(object):
                 state_str += str(cell_value) + " "
         return state_str.strip()
     
+
+    def my_print(self):
+        for row in self._board:
+            for col in row:
+                if col == -1:
+                    print(f"{colors['blue']} {col} {colors['reset']}", end="")
+                elif col == 1:
+                    # cnt_1 += 1
+                    print(f"{colors['red']}  {col} {colors['reset']}", end="")
+                else:
+                    # cnt_0 += 1
+                    print(f"{colors['green']}  {col} {colors['reset']}", end="")
+            print()
 
 
     def get_board(self) -> np.ndarray:
